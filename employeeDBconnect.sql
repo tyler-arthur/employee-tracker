@@ -16,7 +16,7 @@ SELECT * FROM department;
 
 CREATE TABLE employee_role (
   id INT PRIMARY KEY,
-  title VARCHAR(130) NOT NULL,
+  title VARCHAR(30) NOT NULL,
   salary DECIMAL(10,2) NULL,
   department_id INT NOT NULL
 );
@@ -25,10 +25,10 @@ SELECT * FROM employee_role;
 
 CREATE TABLE employee (
   id INT PRIMARY KEY,
-  first_name VARCHAR(100) NOT NULL,
-  last_name VARCHAR(100) NOT NULL,
+  first_name VARCHAR(30) NOT NULL,
+  last_name VARCHAR(30) NOT NULL,
   role_id INT NOT NULL,
-  manager_id INT NOT NULL
+  manager_id INT NULL
 );
 
 SELECT * FROM employee;
