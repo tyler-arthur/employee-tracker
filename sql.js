@@ -25,5 +25,3 @@ const readTable = (table) => {
     });
 }
 
-module.exports = sql;
-module.exports = addToTable;

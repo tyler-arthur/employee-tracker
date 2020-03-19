@@ -142,11 +142,10 @@ const addSelector = () => {
                 break;
         
             case 'Role':
-                
                 break;
         
             case 'Employee':
-                
+                employeeAdd();                
                 break;
         
             default:
@@ -156,11 +155,17 @@ const addSelector = () => {
     })
 }
 
-// Adds a row to a selected table
+// Adds a new department to the DB
 const departmentAdd = () => {
     inquirer.prompt([{
         name: 'id',
-        message: 'Type a three digit number for your new department:'
+        message: 'Type a three digit number for your new department:',
+        validate: (name) => {
+            if (name.length !== 3) return 'Please enter a 3 digit number:';
+            // TODO: validate for existing department id's
+            return true;
+        }
+        
     }, {
         name: 'departmentName',
         message: 'What would you like your department name to be?'
@@ -169,5 +174,75 @@ const departmentAdd = () => {
         newDep = new Department(action.id, action.departmentName);
         console.log(newDep)
         newDep.addDepartment();
+    }).then(() => {
+        continueOrExit();
     })
 }
+
+// Adds a new employee to the DB
+const employeeAdd = () => {
+    const roleChoices = [];
+    connection.query(`SELECT title, id FROM employee_role`, (err, res) => {
+        if (err) throw err;
+        res.forEach(e => {
+            roleChoices.push(JSON.stringify(e));
+        });
+    })
+
+    const managerChoices = [];
+    connection.query(`SELECT last_name, id FROM employee`, (err, res) => {
+        if (err) throw err;
+        res.forEach(e => {
+            managerChoices.push(JSON.stringify(e));
+        });
+        managerChoices.unshift("Employee will not be assigned a manager")
+    })
+
+    inquirer.prompt([{
+        name: 'firstName',
+        message: "What is your new employee's first name?"
+    }, {
+        name: 'lastName',
+        message: "What is your new employee's last name?"
+    }, {
+        type: 'list',
+        name: 'role',
+        message: "What is your new employee's role?",
+        choices: roleChoices
+    }, {
+        type: 'list',
+        name: 'manager',
+        message: "Who is your new employee's manager?",
+        choices: managerChoices
+    }
+    ]).then((action) => {
+        // TODO: generate employee id #
+        let newID;
+        connection.query(`SELECT * FROM employee ORDER BY id DESC LIMIT 0, 1`, (err, res) => {
+            if (err) throw err;
+            newID = JSON.parse(res.id)
+            newID++;
+        })
+        // TODO: fix id, roleID and managerID populating as undefined
+        if (action.manager === 'Employee will not be assigned a manager') action.manager.id = NULL;
+        newEmp = new Employee(newID, action.firstName, action.lastName, action.role.id, action.manager.id);
+        console.log(newEmp)
+        newEmp.addEmployee();
+    }).then(() => {
+        continueOrExit();
+    })
+}
+
+// function testing area
+// 
+const returnFieldTable = (field, table) => {
+    connection.query(`SELECT ${field} FROM ${table}`, (err, res) => {
+        if (err) throw err;
+        res.forEach(e => {
+            return e.id;
+        });
+    })
+}
+
+// 
+// function testing area
