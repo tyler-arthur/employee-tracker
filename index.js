@@ -25,6 +25,16 @@ connection.connect((err) => {
     mainSelector();
 });
 
+// Allows users to return to mainSelector or exit the program
+const continueOrExit = () =>{
+    inquirer.prompt({
+        type: 'confirm',
+        name: 'action',
+        message: 'Do you want to do anything else?'
+    }).then((res) => {
+        res.action ? mainSelector() : connection.end();
+    })
+} 
 
 // Main menu of app
 const mainSelector = () => {
@@ -44,6 +54,7 @@ const mainSelector = () => {
         switch (res.action) {
             case 'Add a department, role, or employee:':
                 // TODO: Add inquirer prompt to handle adding to tables
+                addSelector();
                 break;
                 
             case 'View a department, role, or employee:':      
@@ -104,6 +115,14 @@ const readSelector = () => {
     })
 }
 
+// Reads all data from a selected table
+const readTable = (table) => {
+    console.log('reading full table...');
+    const query = connection.query('SELECT * FROM ' + table, (err, res) => {
+        if (err) throw err;
+        console.log(res);
+    });
+}
 
 const addSelector = () => {
     inquirer.prompt({
@@ -119,7 +138,7 @@ const addSelector = () => {
     }).then((res) => {
         switch (res.action) {
             case 'Department':
-                
+                departmentAdd();
                 break;
         
             case 'Role':
@@ -137,38 +156,18 @@ const addSelector = () => {
     })
 }
 
-// Adds a row toa selected table
-const addToTable = (data) => {
-    switch (data.action) {
-        case 'department':
-
-            break;
-        case 'role':
-
-            break;
-        case 'employee':
-
-            break;
-        default:
-            console.log('what?')
+// Adds a row to a selected table
+const departmentAdd = () => {
+    inquirer.prompt([{
+        name: 'id',
+        message: 'Type a three digit number for your new department:'
+    }, {
+        name: 'departmentName',
+        message: 'What would you like your department name to be?'
     }
-}
-
-// Reads all data from a selected table
-const readTable = (table) => {
-    console.log('reading full table...');
-    const query = connection.query('SELECT * FROM ' + table, (err, res) => {
-        if (err) throw err;
-        console.log(res);
-    });
-}
-
-const continueOrExit = () =>{
-    inquirer.prompt({
-        type: 'confirm',
-        name: 'action',
-        message: 'Do you want to do anything else?'
-    }).then((res) => {
-        res.action ? mainSelector() : connection.end();
+    ]).then((action) => {
+        newDep = new Department(action.id, action.departmentName);
+        console.log(newDep)
+        newDep.addDepartment();
     })
-} 
+}
