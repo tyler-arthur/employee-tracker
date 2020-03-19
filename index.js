@@ -1,9 +1,9 @@
 const mysql = require('mysql');
 const inquirer = require('inquirer');
 const table = require('console.table');
-// const readTable = require('./readTable');
-// const addToTable = require('./addToTable');
-const Employee = require('./lib/Employee')
+const Department = require('./lib/Department');
+const Role = require('./lib/Role');
+const Employee = require('./lib/Employee');
 
 const connection = mysql.createConnection({
     host: 'localhost',
@@ -25,23 +25,8 @@ connection.connect((err) => {
     mainSelector();
 });
 
-// Adds a row toa selected table
-const addToTable = (data) => {
-    switch (data.action) {
-        case 'department':
 
-            break;
-        case 'role':
-
-            break;
-        case 'employee':
-
-            break;
-        default:
-            console.log('what?')
-    }
-}
-
+// Main menu of app
 const mainSelector = () => {
     inquirer.prompt({
         type: 'list',
@@ -56,11 +41,32 @@ const mainSelector = () => {
             'Exit:'
         ]
     }).then((res) => {
-        if (res.action === 'View a department, role, or employee:') readSelector();
-        if (res.action === 'Add a department, role, or employee:') addSelector();
-        // console.log(res)
-        if (res.action === 'exit') {
-            return;
+        switch (res.action) {
+            case 'Add a department, role, or employee:':
+                // TODO: Add inquirer prompt to handle adding to tables
+                break;
+                
+            case 'View a department, role, or employee:':      
+                // DONE: Add inquirer prompt to handle viewing tables
+                readSelector();
+                break;
+                
+            case 'Update employee role or manager:':
+                // TODO: Add inquirer prompt to handle updating itmes in tables
+                break;
+                
+            case 'Delete a department, role, or employee:':
+                // TODO: Add inquirer prompt to handle deleting itmes in tables
+                break;
+                
+            case 'View budget of a department:':
+                // TODO: Add inquirer prompt to view budget for department
+                break;
+        
+            default:
+                // TODO: cleanly exit the program
+                connection.end();
+                break;
         }
     })
 }
@@ -79,20 +85,22 @@ const readSelector = () => {
     }).then((res) => {
         switch (res.action) {
             case 'Department':
-                readTable('department')
+                readTable('department');
                 break;
+
             case 'Role':
-                readTable('role')
+                readTable('employee_role');
                 break;
+
             case 'Employee':
-                readTable('employee')
+                readTable('employee');
                 break;
-            case 'Go Back':
-                mainSelector();
-                break;
+
             default:
                 mainSelector();
         }
+    }).then((res) => {
+        continueOrExit();
     })
 }
 
@@ -111,31 +119,56 @@ const addSelector = () => {
     }).then((res) => {
         switch (res.action) {
             case 'Department':
-                inquirer.prompt([{
-                    type: 'input',
-                    name: 'id',
-                    message: "Please enter a three digit number for your department's ID:"
-                },{
-                    type: 'input',
-                    name: 'department_name',
-                    message: "Please enter a daprtment name:"
-                }]).then((answers) => {
-                    addEmployee(answers)
-                })
-
+                
                 break;
+        
             case 'Role':
-    
+                
                 break;
+        
             case 'Employee':
-    
+                
                 break;
-            case 'Go Back':
-                mainSelector();
-                break;
+        
             default:
                 mainSelector();
+                break;
         }
     })
 }
 
+// Adds a row toa selected table
+const addToTable = (data) => {
+    switch (data.action) {
+        case 'department':
+
+            break;
+        case 'role':
+
+            break;
+        case 'employee':
+
+            break;
+        default:
+            console.log('what?')
+    }
+}
+
+// Reads all data from a selected table
+const readTable = (table) => {
+    console.log('reading full table...');
+    const query = connection.query('SELECT * FROM ' + table, (err, res) => {
+        if (err) throw err;
+        console.log(res);
+    });
+}
+
+const continueOrExit = () =>{
+    inquirer.prompt({
+        type: 'confirm',
+        name: 'action',
+        message: 'Do you want to do anything else?'
+    }).then((res) => {
+        res.action ? mainSelector() : connection.end();
+    })
+} 
