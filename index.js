@@ -216,6 +216,8 @@ const employeeAdd = () => {
         choices: managerChoices
     }
     ]).then((action) => {
+        console.log(action)
+        debugger;
         // TODO: generate employee id #
         let newID;
         connection.query(`SELECT * FROM employee ORDER BY id DESC LIMIT 0, 1`, (err, res) => {
@@ -230,6 +232,8 @@ const employeeAdd = () => {
         newEmp.addEmployee();
     }).then(() => {
         continueOrExit();
+    }).catch((err) => {
+        console.log(err);
     })
 }
 
