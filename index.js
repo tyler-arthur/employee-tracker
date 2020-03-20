@@ -4,6 +4,11 @@ const table = require('console.table');
 const Department = require('./lib/Department');
 const Role = require('./lib/Role');
 const Employee = require('./lib/Employee');
+const sqlFunc = require('./sql.js')
+
+// This is how to call functions
+// console.log(neatFunctions.readTable())
+
 
 const connection = mysql.createConnection({
     host: 'localhost',
@@ -18,23 +23,6 @@ const connection = mysql.createConnection({
     password: 'root',
     database: 'employeesDB'
 });
-
-connection.connect((err) => {
-    if (err) throw err;
-    console.log('connected as id ' + connection.threadId + '\n');
-    mainSelector();
-});
-
-// Allows users to return to mainSelector or exit the program
-const continueOrExit = () =>{
-    inquirer.prompt({
-        type: 'confirm',
-        name: 'action',
-        message: 'Do you want to do anything else?'
-    }).then((res) => {
-        res.action ? mainSelector() : connection.end();
-    })
-} 
 
 // Main menu of app
 const mainSelector = () => {
@@ -82,6 +70,16 @@ const mainSelector = () => {
     })
 }
 
+// Open sql connection
+connection.connect((err) => {
+    if (err) throw err;
+    console.log('connected as id ' + connection.threadId + '\n');
+    sqlFunc.getID('employee_role', 'title', 'Student');
+    // console.log(sqlFunc.getID("employee_role", 'Student'))
+    mainSelector();
+});
+
+// menu options to read a specific table
 const readSelector = () => {
     inquirer.prompt({
         type: 'list',
@@ -96,34 +94,29 @@ const readSelector = () => {
     }).then((res) => {
         switch (res.action) {
             case 'Department':
-                readTable('department');
+                sqlFunc.readTable('department');
                 break;
 
             case 'Role':
-                readTable('employee_role');
+                sqlFunc.readTable('employee_role');
                 break;
 
             case 'Employee':
-                readTable('employee');
+                sqlFunc.readTable('employee');
                 break;
 
             default:
                 mainSelector();
         }
     }).then((res) => {
-        continueOrExit();
+        sqlFunc.continueOrExit();
+    }).catch (err => {
+        console.log(err);
+        
     })
 }
 
-// Reads all data from a selected table
-const readTable = (table) => {
-    console.log('reading full table...');
-    const query = connection.query('SELECT * FROM ' + table, (err, res) => {
-        if (err) throw err;
-        console.log(res);
-    });
-}
-
+// Menu options to add rows to a specific table
 const addSelector = () => {
     inquirer.prompt({
         type: 'list',
@@ -138,10 +131,11 @@ const addSelector = () => {
     }).then((res) => {
         switch (res.action) {
             case 'Department':
-                departmentAdd();
+                sqlFunc.departmentAdd();
                 break;
         
             case 'Role':
+                sqlFunc.roleAdd();
                 break;
         
             case 'Employee':
@@ -149,54 +143,22 @@ const addSelector = () => {
                 break;
         
             default:
-                mainSelector();
+                sqlFunc.continueOrExit();
                 break;
         }
     })
 }
 
-// Adds a new department to the DB
-const departmentAdd = () => {
-    inquirer.prompt([{
-        name: 'id',
-        message: 'Type a three digit number for your new department:',
-        validate: (name) => {
-            if (name.length !== 3) return 'Please enter a 3 digit number:';
-            // TODO: validate for existing department id's
-            return true;
-        }
-        
-    }, {
-        name: 'departmentName',
-        message: 'What would you like your department name to be?'
-    }
-    ]).then((action) => {
-        newDep = new Department(action.id, action.departmentName);
-        console.log(newDep)
-        newDep.addDepartment();
-    }).then(() => {
-        continueOrExit();
-    })
-}
+
 
 // Adds a new employee to the DB
 const employeeAdd = () => {
     const roleChoices = [];
-    connection.query(`SELECT title, id FROM employee_role`, (err, res) => {
-        if (err) throw err;
-        res.forEach(e => {
-            roleChoices.push(JSON.stringify(e));
-        });
-    })
-
     const managerChoices = [];
-    connection.query(`SELECT last_name, id FROM employee`, (err, res) => {
-        if (err) throw err;
-        res.forEach(e => {
-            managerChoices.push(JSON.stringify(e));
-        });
-        managerChoices.unshift("Employee will not be assigned a manager")
-    })
+
+    sqlFunc.getRoleChoices(roleChoices);
+
+    sqlFunc.getManagerChoices(managerChoices);
 
     inquirer.prompt([{
         name: 'firstName',
@@ -216,22 +178,20 @@ const employeeAdd = () => {
         choices: managerChoices
     }
     ]).then((action) => {
-        console.log(action)
-        debugger;
-        // TODO: generate employee id #
-        let newID;
-        connection.query(`SELECT * FROM employee ORDER BY id DESC LIMIT 0, 1`, (err, res) => {
-            if (err) throw err;
-            newID = JSON.parse(res.id)
-            newID++;
-        })
-        // TODO: fix id, roleID and managerID populating as undefined
-        if (action.manager === 'Employee will not be assigned a manager') action.manager.id = NULL;
-        newEmp = new Employee(newID, action.firstName, action.lastName, action.role.id, action.manager.id);
+        const empObj = [];
+        empObj.push(action.firstName, action.lastName)
+        const roleID = sqlFunc.getID("employee_role", 'title', action.role)
+        const managerID = sqlFunc.getID("employee", 'last_name', action.manager)
+        empObj.push(roleID, managerID);
+        
+        console.log(empObj)
+    }).then(empObj => {
+        if (empObj[3] === 'Employee will not be assigned a manager') empObj[3] = NULL;
+        newEmp = new Employee(empObj[0], empObj[1], empObj[2], empObj[3]);
         console.log(newEmp)
-        newEmp.addEmployee();
+        // newEmp.addEmployee();
     }).then(() => {
-        continueOrExit();
+        sqlFunc.continueOrExit();
     }).catch((err) => {
         console.log(err);
     })
@@ -239,14 +199,6 @@ const employeeAdd = () => {
 
 // function testing area
 // 
-const returnFieldTable = (field, table) => {
-    connection.query(`SELECT ${field} FROM ${table}`, (err, res) => {
-        if (err) throw err;
-        res.forEach(e => {
-            return e.id;
-        });
-    })
-}
 
 // 
 // function testing area

@@ -24,11 +24,12 @@ CREATE TABLE employee_role (
 SELECT * FROM employee_role;
 
 CREATE TABLE employee (
-  id INT PRIMARY KEY,
+  id INT AUTO_INCREMENT=1001,
   first_name VARCHAR(30) NOT NULL,
   last_name VARCHAR(30) NOT NULL,
   role_id INT NOT NULL,
   manager_id INT NULL
+  PRIMARY KEY (id)
 );
 
 SELECT * FROM employee;
