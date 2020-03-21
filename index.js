@@ -6,10 +6,6 @@ const Role = require('./lib/Role');
 const Employee = require('./lib/Employee');
 const sqlFunc = require('./sql.js')
 
-// This is how to call functions
-// console.log(neatFunctions.readTable())
-
-
 const connection = mysql.createConnection({
     host: 'localhost',
 
@@ -74,8 +70,6 @@ const mainSelector = () => {
 connection.connect((err) => {
     if (err) throw err;
     console.log('connected as id ' + connection.threadId + '\n');
-    sqlFunc.getID('employee_role', 'title', 'Student');
-    // console.log(sqlFunc.getID("employee_role", 'Student'))
     mainSelector();
 });
 
@@ -149,8 +143,6 @@ const addSelector = () => {
     })
 }
 
-
-
 // Adds a new employee to the DB
 const employeeAdd = () => {
     const roleChoices = [];
@@ -178,18 +170,11 @@ const employeeAdd = () => {
         choices: managerChoices
     }
     ]).then((action) => {
-        const empObj = [];
-        empObj.push(action.firstName, action.lastName)
-        const roleID = sqlFunc.getID("employee_role", 'title', action.role)
-        const managerID = sqlFunc.getID("employee", 'last_name', action.manager)
-        empObj.push(roleID, managerID);
-        
-        console.log(empObj)
-    }).then(empObj => {
-        if (empObj[3] === 'Employee will not be assigned a manager') empObj[3] = NULL;
-        newEmp = new Employee(empObj[0], empObj[1], empObj[2], empObj[3]);
-        console.log(newEmp)
-        // newEmp.addEmployee();
+        let managerID;
+        action.manager === 'Employee will not be assigned a manager' ? managerID = "NULL" : managerID = JSON.parse(action.role);
+        newEmp = new Employee(action.firstName, action.lastName, JSON.parse(action.role), managerID);
+        newEmp.addEmployee();
+        if (newEmp) console.log(newEmp);
     }).then(() => {
         sqlFunc.continueOrExit();
     }).catch((err) => {

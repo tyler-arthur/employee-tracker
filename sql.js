@@ -52,29 +52,27 @@ const getDepChoices = (array) => {
     connection.query(`SELECT id FROM department`, (err, res) => {
         if (err) throw err;
         res.forEach(e => {
-            array.push((e));
+            array.push(JSON.stringify(e.id));
         });
     })
-    console.log(array)
     return array;
 }
 
 const getRoleChoices = (array) => {
-    connection.query(`SELECT title FROM employee_role`, (err, res) => {
+    connection.query(`SELECT id FROM employee_role`, (err, res) => {
         if (err) throw err;
         res.forEach(e => {
-            array.push(JSON.stringify(e.title));
+            array.push(JSON.stringify(e.id));
         });
     })
-    console.log(array)
     return array;
 }
 
 const getManagerChoices = (array) => {
-    connection.query(`SELECT last_name FROM employee`, (err, res) => {
+    connection.query(`SELECT id FROM employee`, (err, res) => {
         if (err) throw err;
         res.forEach(e => {
-            array.push(JSON.stringify(e.last_name));
+            array.push(JSON.stringify(e));
         });
         array.unshift("Employee will not be assigned a manager")
     })
@@ -84,7 +82,6 @@ const getManagerChoices = (array) => {
 const getID = (table, field, name) => {
     connection.query(`SELECT id FROM ${table} WHERE ${field}='${name}'`, (err, res) => {
         if (err) throw err;
-        console.log(res);
         return res;
     })
 }
@@ -113,6 +110,7 @@ const departmentAdd = () => {
         newDep = new Department(action.id, action.departmentName);
         console.log(newDep)
         newDep.addDepartment();
+    }).then(() => {continueOrExit()
     }).catch(err => {
         console.log(err);
     })
@@ -149,10 +147,11 @@ const roleAdd = () => {
         choices: depChoices
     }
     ]).then((action) => {
-        
         newRole = new Role(JSON.parse(action.id), action.roleName, JSON.parse(action.salary), action.department);
         console.log(newRole)
         newRole.addRole();
+    }).then(() => {continueOrExit()
+            
     }).catch(err => {
         console.log(err);
     })
